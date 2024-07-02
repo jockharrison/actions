@@ -9,6 +9,13 @@ on:
           - rpm
           - deb
         required: true
+      region:
+        type: choice
+        description: 'region [prod|nonprod]'
+        options:
+          - prod
+          - nonprod
+        required: true
 jobs:
   deploy:
     runs-on: ${{ matrix.os }}
