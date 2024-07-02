@@ -25,11 +25,25 @@ jobs:
         include:
           - os: ubuntu-20.04
             package-manager: deb
+            environment: prod
           - os: ubuntu-22.04
             package-manager: rpm
+            environment: prod
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: nonprod
+          - os: ubuntu-22.04
+            package-manager: rpm
+            environment: nonprod
         exclude:
           - region: eu-east-2
+            package-manager: rpm
             environment: nonprod
+            os: ubuntu-22.04
+          - region: eu-east-2
+            package-manager: deb
+            environment: nonprod
+            os: ubuntu-20.04
     steps:
       - name: print matrix
         run: |
