@@ -22,13 +22,14 @@ jobs:
   deploy:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
         package-manager: [deb, rpm]
         region: [us-west-2, us-east-1, eu-east-2]
         environment: [prod, nonprod]
         include:
-          # For prod environment
+          # For deb on Ubuntu 20.04
           - os: ubuntu-20.04
             package-manager: deb
             environment: prod
@@ -41,6 +42,16 @@ jobs:
             package-manager: deb
             environment: prod
             region: eu-east-2
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: nonprod
+            region: us-west-2
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: nonprod
+            region: us-east-1
+
+          # For rpm on Ubuntu 22.04
           - os: ubuntu-22.04
             package-manager: rpm
             environment: prod
@@ -53,15 +64,6 @@ jobs:
             package-manager: rpm
             environment: prod
             region: eu-east-2
-          # For nonprod environment
-          - os: ubuntu-20.04
-            package-manager: deb
-            environment: nonprod
-            region: us-west-2
-          - os: ubuntu-20.04
-            package-manager: deb
-            environment: nonprod
-            region: us-east-1
           - os: ubuntu-22.04
             package-manager: rpm
             environment: nonprod
@@ -70,6 +72,7 @@ jobs:
             package-manager: rpm
             environment: nonprod
             region: us-east-1
+
         exclude:
           - os: ubuntu-20.04
             package-manager: rpm
@@ -81,6 +84,6 @@ jobs:
     steps:
       - name: print matrix
         run: |
-          echo ${{ matrix.os }}
-          echo ${{ matrix.package-manager }}
-          echo ${{ matrix.region }}
+          echo "${{ matrix.os }}"
+          echo "${{ matrix.package-manager }}"
+          echo "${{ matrix.region }}"
