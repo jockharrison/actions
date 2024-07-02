@@ -2,7 +2,7 @@ name: Package Deployment
 on:
   workflow_dispatch:
     inputs:
-      package-nanager:
+      package-manager:
         type: choice
         description: 'Artifact type (rpm/deb)'
         options:
@@ -21,10 +21,6 @@ jobs:
           - os: ubuntu-22.04
             package-manager: rpm
         exclude:
-          - os: ubuntu-20.04
-            package-manager: rpm
-          - os: ubuntu-22.04
-            package-manager: deb
           - region: eu-east-2
             environment: nonprod
     steps:
