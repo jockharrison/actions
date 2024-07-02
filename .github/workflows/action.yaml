@@ -1,0 +1,145 @@
+name: 'Test Docker Deployment to EKS'
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact:
+        type: choice
+        description: 'Artifact type (rpm/deb)'
+        options:
+          - rpm
+          #- deb
+        required: true
+      environment:
+        type: choice
+        description: 'Select the account name:'
+        options:
+          - infnonprod
+          #- infprod
+        required: true
+      region:
+        type: choice
+        description: 'Select a region (Virginia / Oregon / Ireland):'
+        options:
+          - virginia
+          - oregon
+          - ireland
+        required: true
+      docker_path:
+        type: string
+        description: 'PATH to docker repo'
+        default: 'cse-docker-local/jenkins/'
+        required: true
+      image:
+        type: string
+        description: 'Docker Image name'
+        default: 'jenkins:latest'
+        required: true
+      artifact_path:
+        type: string
+        description: 'Artifact PATH'
+      artifact_pkg:
+        type: string
+        description: 'artifact to be installed'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test_docker_deployment:
+    name: Test Docker Deployment to EKS
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        region_environment: [
+          { region: "virginia", aws_region: "us-east-1", environment: "infprod" },
+          { region: "virginia", aws_region: "us-east-1", environment: "infnonprod" },
+          { region: "oregon", aws_region: "us-west-2", environment: "infprod" },
+          { region: "oregon", aws_region: "us-west-2", environment: "infnonprod" },
+          { region: "ireland", aws_region: "eu-west-1", environment: "infprod" }
+        ]
+        include:
+          - region_environment: { region: "oregon", aws_region: "us-west-2", environment: "infnonprod" }
+            runner: [ ubuntu-22.04 ]
+            artifact: rpm
+            repository_url: 'cse-space-artifactory-ore.infnonprod.pitupito.io'
+          - region_environment: { region: "oregon", aws_region: "us-west-2", environment: "infnonprod" }
+            runner: [ ubuntu-20.04 ]
+            artifact: deb
+            repository_url: 'cse-space-artifactory-ore.infnonprod.pitupito.io'
+          - region_environment: { region: "virginia", aws_region: "us-east-1", environment: "infnonprod" }
+            runner: [ ubuntu-20.04 ]
+            artifact: deb
+            repository_url: 'cse-space-artifactory-vir.infnonprod.pitupito.io'
+          - region_environment: { region: "virginia", aws_region: "us-east-1", environment: "infnonprod" }
+            runner: [ ubuntu-22.04 ]
+            artifact: rpm
+            repository_url: 'cse-space-artifactory-vir.infnonprod.pitupito.io'
+          - region_environment: { region: "virginia", aws_region: "us-east-1", environment: "infprod" }
+            runner: [ubuntu-22.04]
+            artifact: rpm
+            repository_url: 'artifactory.eks.vir.infprod.services.pitupito.io'
+          - region_environment: { region: "virginia", aws_region: "us-east-1", environment: "infprod" }
+            runner: [ubuntu-20.04]
+            artifact: deb
+            repository_url: 'artifactory.eks.vir.infprod.services.pitupito.io'
+          - region_environment: { region: "oregon", aws_region: "us-west-2", environment: "infprod" }
+            runner: [ ubuntu-20.04 ]
+            artifact: deb
+            repository_url: 'artifactory.ore.infprod.services.pitupito.io'
+          - region_environment: { region: "oregon", aws_region: "us-west-2", environment: "infprod" }
+            runner: [ ubuntu-22.04 ]
+            artifact: rpm
+            repository_url: 'artifactory.ore.infprod.services.pitupito.io'
+          - region_environment: { region: "ireland", aws_region: "eu-west-1", environment: "infprod" }
+            runner: [ubuntu-22.04]
+            artifact: rpm
+            repository_url: 'artifactory.ire.infprod.services.pitupito.io'
+          - region_environment: { region: "ireland", aws_region: "eu-west-1", environment: "infprod" }
+            runner: [ubuntu-20.04]
+            artifact: deb
+            repository_url: 'artifactory.ire.infprod.services.pitupito.io'
+    steps:
+      - name: Print Inputs
+        run: |
+          echo "Artifact: ${{ github.event.inputs.artifact }}"
+          echo "Environment: ${{ matrix.region_environment.environment }}"
+          echo "Region: ${{ matrix.region_environment.aws_region }}"
+          echo "Path: ${{ github.event.inputs.path }}"
+          echo "Image: ${{ github.event.inputs.image }}"
+#      - name: Set Environment
+#        id: set-env
+#        run: |
+#            echo "AWS_REGION=${{ matrix.region_environment.aws_region }}" >> $GITHUB_OUTPUT
+#            if [ {{ matrix.region_environment.environment }} == infnonprod ]; then
+#              echo "ACCOUNT=21121112112221" >> $GITHUB_OUTPUT
+#            else
+#              echo "ACCOUNT=21211212222112" >> $GITHUB_OUTPUT
+#            fi
+#      - name: configure-aws-credentials
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          role-to-assume: arn:aws:iam::${{ steps.set-env.outputs.ACCOUNT }}:role/djif-gha-admin
+#          role-session-name: rolesession
+#          aws-region: ${{ steps.set-env.outputs.AWS_REGION }}
+#
+#      - name: configure-git
+#        run: |
+#          git config --global user.email ${{ secrets.USER_EMAIL }}
+#          git config --global user.name ${{ secrets.USER }}
+#
+#      - name: checkout-branch
+#        uses: actions/checkout@v2
+#        with:
+#          token: ${{ secrets.ACCESS_TOKEN }}
+#      - name: Install dependencies
+#        run: |
+#          sudo yum install -y python3
+#          sudo pip3 install requests
+#          sudo pip3 install boto3
+#      - name: install-docker
+#        run: |
+#          sudo -E python3 docker_deploy_test/dockerDeployTest.py ${{ $matrix.artifact }} ${{ matrix.region_environment.aws_region }} ${{ matrix.region_environment.environment }} ${{ repository_url }} ${{ inputs.docker_path }} ${{ inputs.image }} ${{ inputs.artifact_path }} ${{ inputs.artifact_pkg }}
+
