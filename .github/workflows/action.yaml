@@ -26,23 +26,13 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          echo 'MATRIX_JSON<<EOF' >> $GITHUB_ENV
-          echo "{\"include\": [" >> $GITHUB_ENV
-          if [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
-            echo "{\"os\":\"ubuntu-20.04\",\"package-manager\":\"deb\",\"environment\":\"prod\",\"region\":\"us-west-2\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-20.04\",\"package-manager\":\"deb\",\"environment\":\"prod\",\"region\":\"us-east-1\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-20.04\",\"package-manager\":\"deb\",\"environment\":\"prod\",\"region\":\"eu-east-2\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-22.04\",\"package-manager\":\"rpm\",\"environment\":\"prod\",\"region\":\"us-west-2\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-22.04\",\"package-manager\":\"rpm\",\"environment\":\"prod\",\"region\":\"us-east-1\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-22.04\",\"package-manager\":\"rpm\",\"environment\":\"prod\",\"region\":\"eu-east-2\"}" >> $GITHUB_ENV
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            matrix_value='[{"os":"ubuntu-20.04","package-manager":"deb","environment":"prod","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","environment":"prod","region":"us-east-1"},{"os":"ubuntu-20.04","package-manager":"deb","environment":"prod","region":"eu-east-2"},{"os":"ubuntu-22.04","package-manager":"rpm","environment":"prod","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","environment":"prod","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","environment":"prod","region":"eu-east-2"}]'
           else
-            echo "{\"os\":\"ubuntu-20.04\",\"package-manager\":\"deb\",\"environment\":\"nonprod\",\"region\":\"us-west-2\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-20.04\",\"package-manager\":\"deb\",\"environment\":\"nonprod\",\"region\":\"us-east-1\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-22.04\",\"package-manager\":\"rpm\",\"environment\":\"nonprod\",\"region\":\"us-west-2\"}," >> $GITHUB_ENV
-            echo "{\"os\":\"ubuntu-22.04\",\"package-manager\":\"rpm\",\"environment\":\"nonprod\",\"region\":\"us-east-1\"}" >> $GITHUB_ENV
+            matrix_value='[{"os":"ubuntu-20.04","package-manager":"deb","environment":"nonprod","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","environment":"nonprod","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","environment":"nonprod","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","environment":"nonprod","region":"us-east-1"}]'
           fi
-          echo "]}" >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          echo "matrix=$matrix_value" >> $GITHUB_ENV
+          echo "::set-output name=matrix::$matrix_value"
 
   deploy:
     needs: setup-matrix
@@ -53,6 +43,6 @@ jobs:
     steps:
       - name: print matrix
         run: |
-          echo "${{ matrix.os }}"
-          echo "${{ matrix.package-manager }}"
-          echo "${{ matrix.region }}"
+          echo "Operating System: ${{ matrix.os }}"
+          echo "Package Manager: ${{ matrix.package-manager }}"
+          echo "Region: ${{ matrix.region }}"
