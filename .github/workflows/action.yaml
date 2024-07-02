@@ -26,6 +26,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04]
         package-manager: [deb, rpm]
         region: [us-west-2, us-east-1, eu-east-2]
+        environment: [prod, nonprod]
         include:
           # For prod environment
           - os: ubuntu-20.04
