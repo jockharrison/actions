@@ -9,21 +9,17 @@ on:
           - rpm
           - deb
         required: true
-      environment:
-        type: choice
-        description: 'environment'
-        options:
-          - prod
-          - nonprod
-        required: true
 jobs:
   deploy:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
-        package-manager: [deb, rpm]
-        region: [us-west-2, us-east-1, eu-east-2]
+        region: [us-west-2, us-east-1]
+        include:
+          - os: ubuntu-20.04
+            package-manager: deb
+          - os: ubuntu-22.04
+            package-manager: rpm
         exclude:
           - os: ubuntu-20.04
             package-manager: rpm
