@@ -2,52 +2,27 @@ name: Package Deployment
 on:
   workflow_dispatch:
     inputs:
-      package-manager:
+      artifact:
         type: choice
         description: 'Artifact type (rpm/deb)'
         options:
           - rpm
           - deb
         required: true
-      environment:
-        type: choice
-        description: 'region [prod|nonprod]'
-        options:
-          - prod
-          - nonprod
-        required: true
 jobs:
   deploy:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        region: [us-west-2, us-east-1, eu-east-2]
+        region: [us-west-2, us-east-1]
         include:
           - os: ubuntu-20.04
-            package-manager: deb
-            environment: prod
+            artifact: deb
           - os: ubuntu-22.04
-            package-manager: rpm
-            environment: prod
-          - os: ubuntu-20.04
-            package-manager: deb
-            environment: nonprod
-          - os: ubuntu-22.04
-            package-manager: rpm
-            environment: nonprod
-        exclude:
-          - region: eu-east-2
-            package-manager: rpm
-            environment: nonprod
-            os: ubuntu-22.04
-          - region: eu-east-2
-            package-manager: deb
-            environment: nonprod
-            os: ubuntu-20.04
+            artifact: rpm
     steps:
       - name: print matrix
         run: |
           echo ${{ matrix.os }}
           echo ${{ matrix.package-manager }}
           echo ${{ matrix.region }}
-      
