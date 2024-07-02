@@ -1,25 +1,81 @@
 name: Package Deployment
+
 on:
   workflow_dispatch:
     inputs:
-      artifact:
+      package-manager:
         type: choice
         description: 'Artifact type (rpm/deb)'
         options:
           - rpm
           - deb
         required: true
+      environment:
+        type: choice
+        description: 'Environment'
+        options:
+          - prod
+          - nonprod
+        required: true
+
 jobs:
   deploy:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        region: [us-west-2, us-east-1]
+        os: [ubuntu-20.04, ubuntu-22.04]
+        region: [us-west-2, us-east-1, eu-east-2]
         include:
+          # For prod environment
           - os: ubuntu-20.04
-            artifact: deb
+            package-manager: deb
+            environment: prod
+            region: us-west-2
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: prod
+            region: us-east-1
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: prod
+            region: eu-east-2
           - os: ubuntu-22.04
-            artifact: rpm
+            package-manager: rpm
+            environment: prod
+            region: us-west-2
+          - os: ubuntu-22.04
+            package-manager: rpm
+            environment: prod
+            region: us-east-1
+          - os: ubuntu-22.04
+            package-manager: rpm
+            environment: prod
+            region: eu-east-2
+          # For nonprod environment
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: nonprod
+            region: us-west-2
+          - os: ubuntu-20.04
+            package-manager: deb
+            environment: nonprod
+            region: us-east-1
+          - os: ubuntu-22.04
+            package-manager: rpm
+            environment: nonprod
+            region: us-west-2
+          - os: ubuntu-22.04
+            package-manager: rpm
+            environment: nonprod
+            region: us-east-1
+        exclude:
+          - os: ubuntu-20.04
+            package-manager: rpm
+          - os: ubuntu-22.04
+            package-manager: deb
+          - region: eu-east-2
+            environment: nonprod
+
     steps:
       - name: print matrix
         run: |
