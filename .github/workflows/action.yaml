@@ -2,7 +2,7 @@ name: Package Deployment
 on:
   workflow_dispatch:
     inputs:
-      artifact:
+      package-nanager:
         type: choice
         description: 'Artifact type (rpm/deb)'
         options:
