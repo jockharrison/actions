@@ -26,12 +26,11 @@ jobs:
     steps:
       - id: set-matrix
         run: |
+          echo "::set-output name=matrix::"
           if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
-            matrix_json='{"os": ["ubuntu-20.04", "ubuntu-22.04"], "package-manager": ["deb", "rpm"], "region": ["us-west-2", "us-east-1", "eu-east-2"], "include": [{"os":"ubuntu-20.04","package-manager":"deb","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","region":"us-east-1"},{"os":"ubuntu-20.04","package-manager":"deb","region":"eu-east-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"eu-east-2"}]}'
+            echo '{"os": ["ubuntu-20.04", "ubuntu-22.04"], "package-manager": ["deb", "rpm"], "region": ["us-west-2", "us-east-1", "eu-east-2"], "include": [{"os":"ubuntu-20.04","package-manager":"deb","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","region":"us-east-1"},{"os":"ubuntu-20.04","package-manager":"deb","region":"eu-east-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"eu-east-2"}]}' >> $GITHUB_ENV
           else
-            matrix_json='{"os": ["ubuntu-20.04", "ubuntu-22.04"], "package-manager": ["deb", "rpm"], "region": ["us-west-2", "us-east-1"], "include": [{"os":"ubuntu-20.04","package-manager":"deb","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-east-1"}]}'
-          fi
-          echo "::set-output name=matrix::$matrix_json"
+            echo '{"os": ["ubuntu-20.04", "ubuntu-22.04"], "package-manager": ["deb", "rpm"], "region": ["us-west-2", "us-east-1"], "include": [{"os":"ubuntu-20.04","package-manager":"deb","region":"us-west-2"},{"os":"ubuntu-20.04","package-manager":"deb","region":"us-east-1"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-west-2"},{"os":"ubuntu-22.04","package-manager":"rpm","region":"us-east-1"}]}' >> $GITHUB_ENV
 
   deploy:
     needs: setup-matrix
