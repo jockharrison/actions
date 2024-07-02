@@ -9,7 +9,7 @@ on:
           - rpm
           - deb
         required: true
-      region:
+      environment:
         type: choice
         description: 'region [prod|nonprod]'
         options:
