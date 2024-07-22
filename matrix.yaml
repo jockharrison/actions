@@ -1,0 +1,127 @@
+name: 'Test Docker Deployment to EKS'
+
+on:
+  workflow_dispatch:
+    inputs:
+      package-manager:
+        type: choice
+        description: 'Artifact type (rpm|deb)'
+        options:
+          - rpm
+          - deb
+        required: true
+      environment:
+        type: choice
+        description: 'Select the account name:'
+        options:
+          - infnonprod
+          - infprod
+        required: true
+      docker_path:
+        type: string
+        description: 'PATH to docker repo'
+        default: 'cse-docker-local/jenkins/'
+        required: true
+      docker_image:
+        type: string
+        description: 'Docker Image name'
+        default: 'jenkins:latest'
+        required: true
+      artifact_path:
+        type: string
+        description: 'Artifact PATH'
+      artifact_pkg:
+        type: string
+        description: 'artifact to be installed'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+jobs:
+     setup-matrix:
+       runs-on: ubuntu-latest
+       outputs:
+         matrix: ${{ steps.create-matrix.outputs.matrix }}
+       steps:
+         - id: create-matrix
+           run: |
+             if [ "${{ github.event.inputs.environment }}" == "infprod" ]; then
+               if [ "${{ github.event.inputs.package-manager }}" == "deb" ]; then
+                 MATRIX_JSON='{"os": ["[dj-ubuntu-2004-latest, X64]"], "package-manager": ["deb"], "region": ["us-west-2", "us-east-1", "eu-east-2"], "include": [{"os":"[dj-ubuntu-2004-latest, X64]","package-manager":"deb","region":"us-west-2"},{"os":"[dj-ubuntu-2004-latest, X64]","package-manager":"deb","region":"us-east-1"},{"os":"[dj-ubuntu-2004-latest, X64]","package-manager":"deb","region":"eu-east-2"}]}'
+               elif [ "${{ github.event.inputs.package-manager }}" == "rpm" ]; then
+                 MATRIX_JSON='{"os": ["[dj-awslinux-2-latest, X64]"], "package-manager": ["rpm"], "region": ["us-west-2", "us-east-1", "eu-east-2"], "include": [{"os":"[dj-awslinux-2-latest, X64]","package-manager":"rpm","region":"us-west-2"},{"os":"[dj-awslinux-2-latest, X64]","package-manager":"rpm","region":"us-east-1"},{"os":"[dj-awslinux-2-latest, X64]","package-manager":"rpm","region":"eu-east-2"}]}'
+               fi
+             else
+               if [ "${{ github.event.inputs.package-manager }}" == "deb" ]; then
+                 MATRIX_JSON='{"os": ["[dj-ubuntu-2004-latest, X64]"], "package-manager": ["deb"], "region": ["us-west-2", "us-east-1"], "include": [{"os":"[dj-ubuntu-2004-latest, X64]","package-manager":"deb","region":"us-west-2"},{"os":"[dj-ubuntu-2004-latest, X64]","package-manager":"deb","region":"us-east-1"}]}'
+               elif [ "${{ github.event.inputs.package-manager }}" == "rpm" ]; then
+                 MATRIX_JSON='{"os": ["[dj-awslinux-2-latest, X64]"], "package-manager": ["rpm"], "region": ["us-west-2", "us-east-1"], "include": [{"os":"[dj-awslinux-2-latest, X64]","package-manager":"rpm","region":"us-west-2"},{"os":"[dj-awslinux-2-latest, X64]","package-manager":"rpm","region":"us-east-1"}]}'
+               fi
+             fi
+             echo "matrix=${MATRIX_JSON}" >> $GITHUB_ENV
+             echo "::set-output name=matrix::${MATRIX_JSON}"
+     deploy:
+       needs: setup-matrix
+       runs-on: ${{ matrix.os }}
+       strategy:
+         fail-fast: false
+         matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+       steps:
+         - name: Print Inputs
+           run: |
+             echo "Environment: ${{ inputs.environment }}"
+             echo "Region: ${{ matrix.region }}"
+             echo "Docker Path: ${{ inputs.docker_path }}"
+             echo "Docker Image: ${{ inputs.docker_image }}"
+             echo "Artifact Path: ${{ inputs.artifact_path }}"
+             echo "Artifact Package: ${{ inputs.artifact_pkg }}"
+         - name: Set Environment
+           id: set-env
+           run: |
+             echo "AWS_REGION=${{ matrix.region }}" >> $GITHUB_OUTPUT
+             
+             if [ ${{ matrix.environment }} == infnonprod ]; then
+               echo "ACCOUNT=067463091988" >> $GITHUB_OUTPUT
+               if [ ${{ matrix.region }} == "us-west-2"]; then
+                 echo "REPOSITORY_URL=cse-space-artifactory-ore.infnonprod.dowjones.io" >> $GITHUB_OUTPUT
+               else
+                 echo "REPOSITORY_URL=cse-space-artifactory-vir.infnonprod.dowjones.io" >> $GITHUB_OUTPUT
+               fi
+             else
+               echo "ACCOUNT=528339170479" >> $GITHUB_OUTPUT
+               if [ ${{ matrix.region }} == "us-west-2" ]; then
+                 echo "REPOSITORY_URL=artifactory.ore.infprod.services.dowjones.io" >> $GITHUB_OUTPUT
+               elif [ ${{ matrix.region }} == "us-east-1" ]; then
+                 echo "REPOSITORY_URL=artifactory.vir.infprod.services.dowjones.io" >> $GITHUB_OUTPUT
+               else
+                 echo "REPOSITORY_URL=artifactory.ire.infprod.services.dowjones.io" >> $GITHUB_OUTPUT
+               fi
+             fi
+         - name: configure-aws-credentials
+           uses: aws-actions/configure-aws-credentials@v1
+           with:
+  @@ -116,25 +58,17 @@ jobs:
+       with:
+         token: ${{ secrets.ACCESS_TOKEN }}
+
+       - name: Install RPM dependencies
+         if: ${{ (inputs.package-manager == 'rpm') }}
+         run: |
+           sudo yum install -y python3
+           sudo pip3 install requests
+           sudo pip3 install boto3
+       - name: Set up python for DEB
+         if: ${{ (inputs.package-manager == 'deb') }}
+         uses: actions/setup-python@v4
+         with:
+           python-version: 3.7
+       - name: Install DEB dependencies
+         if: ${{ (inputs.package-manager == 'deb') }}
+         run: |
+           sudo python3 -m pip install --upgrade pip
+           sudo pip3 install requests
+           sudo pip3 install boto3
+#      - name: install-docker
+#        run: |
+#          sudo -E python3 docker_deploy_test/dockerDeployTest.py ${{ $matrix.artifact }} ${{ matrix.region_environment.aws_region }} ${{ matrix.region_environment.environment }} ${{ repository_url }} ${{ inputs.docker_path }} ${{ inputs.image }} ${{ inputs.artifact_path }} ${{ inputs.artifact_pkg }}
